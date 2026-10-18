@@ -34,13 +34,14 @@ def text: if type == "string" then . else "" end;
 def blank: text | gsub("[ \t\r\n]"; "") == "";
 '
 
-# One line per result file: the test (fullName, name) and the required labels it lacks.
+# One line per result file: the file, the test (fullName, name) and the required labels it lacks.
 JQ_READ_RESULT="$JQ_HELPERS"'
 if type != "object" then error("not a test result") else . end
 | [ .labels | if type == "array" then .[] else empty end
     | objects | select((.name | type == "string") and (.value | blank | not)) | .name ]
   as $present
-| { test: [ (.fullName | text), (.name | text) ],
+| { file: input_filename,
+    test: [ (.fullName | text), (.name | text) ],
     missing: ($required - $present) }
 '
 
@@ -121,9 +122,11 @@ records="$(list_result_files \
     | xargs -0 jq -c --argjson required "$required" "$JQ_READ_RESULT" 2>/dev/null)" \
     || fail_on_first_unreadable_file
 
-# jq reads an empty file or two objects in one file without an error.
-record_count=$(printf '%s' "$records" | awk 'END { print NR }')
-if [ "$record_count" -ne "$file_count" ]; then
+# jq reads an empty file or two objects in one file without an error,
+# so every file must give exactly one record.
+one_record_per_file="$(jq -s --argjson file_count "$file_count" \
+    'group_by(.file) | length == $file_count and all(.[]; length == 1)' <<<"$records")"
+if [ "$one_record_per_file" != "true" ]; then
     fail_on_first_unreadable_file
 fi
 
