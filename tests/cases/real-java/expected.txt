@@ -1,6 +1,6 @@
 Allure results: ../../real/java-junit5
 Required labels: epic, feature, owner
-Tests found: 9, not checked because the name contains "allure": 1
+Tests found: 10, not checked because the name contains "allure": 2
 
 Tests missing required labels:
 

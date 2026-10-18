@@ -1,6 +1,6 @@
 Allure results: results
 Required labels: epic, owner
-Tests found: 6, not checked because the name contains "allure": 0
+Tests found: 5, not checked because the name contains "allure": 0
 
 Tests missing required labels:
 
@@ -24,5 +24,5 @@ Tests missing required labels:
     name:    ownerSpaces
     missing: owner
 
-FAILED: 5 of 6 checked tests are missing required labels.
+FAILED: 5 of 5 checked tests are missing required labels.
 exit: 1

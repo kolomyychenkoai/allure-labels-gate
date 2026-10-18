@@ -1,0 +1,2 @@
+ERROR: b-result.json in results cannot be read as an Allure test result (expected one JSON object). The file may be cut short if the test run was killed: clean the directory and run the tests again.
+exit: 2

@@ -9,7 +9,8 @@
 # JAVA_SERVICE   Maven project with allure-junit5 (default: ~/projects/testapps/billing)
 # MAVEN_ARGS     extra Maven arguments that turn Allure on (default: -Pallure-lib)
 #
-# Needs Java 17+ with Maven, Node.js with npm, git and jq.
+# Needs Maven and the Java version the service builds with (testapps/billing: Java 25),
+# Node.js with npm, git and jq.
 
 set -euo pipefail
 
@@ -30,7 +31,7 @@ run_java_service() {
     cp "$SOURCES/LabelsContractTest.java" "$package_dir/"
     # Not -q: the log must show the test run and the retried flaky test.
     (cd "$WORK/java" && mvn $MAVEN_ARGS test \
-        -Dsurefire.rerunFailingTestsCount=1 \
+        -Dsurefire.rerunFailingTestsCount=1 -Dmaven.test.failure.ignore=true \
         -Dallure.results.directory="$WORK/java/target/allure-results" > "$WORK/java.log" 2>&1) \
         || { tail -40 "$WORK/java.log"; return 1; }
     grep -E 'Tests run:.*Flakes|Tests run: [0-9]+, Failures' "$WORK/java.log" | tail -1
@@ -42,7 +43,7 @@ run_js_example() {
     git clone -q --depth 1 https://github.com/allure-examples/jest-npm-cjs-js.git "$WORK/js"
     cp "$SOURCES/labels.spec.js" "$WORK/js/__tests__/"
     (cd "$WORK/js" && npm ci --silent --ignore-scripts > "$WORK/js.log" 2>&1 \
-        && npx jest >> "$WORK/js.log" 2>&1) || { tail -40 "$WORK/js.log"; return 1; }
+        && { npx jest >> "$WORK/js.log" 2>&1 || true; }) || { tail -40 "$WORK/js.log"; return 1; }
     grep -E '^Tests:' "$WORK/js.log"
     check_results "$WORK/js/allure-results"
 }
@@ -52,7 +53,7 @@ expected_failing() {
     jq -r --arg required "$REQUIRED_LABELS" '
         ($required | split(",")) as $names
         | select((.name // "" | ascii_downcase | contains("allure")) | not)
-        | select([ .labels[]? | select((.value // "" | gsub("\\s"; "")) != "") | .name ] as $present
+        | select([ .labels[]? | select((.value // "" | gsub("[ \t\r\n]"; "")) != "") | .name ] as $present
                  | any($names[]; . as $n | $present | index($n) | not))
         | "\(.fullName) | \(.name)"' "$1"/*-result.json | sort -u
 }
@@ -66,13 +67,13 @@ check_results() {
     local results="$1"
     local python_out bash_out
     python_out="$(ALLURE_RESULTS_DIR="$results" REQUIRED_LABELS="$REQUIRED_LABELS" \
-        python3 "$REPO_DIR/check_allure_labels.py" 2>&1 || true)"
+        python3 "$REPO_DIR/check_allure_labels.py" 2>&1; echo "exit: $?")"
     bash_out="$(ALLURE_RESULTS_DIR="$results" REQUIRED_LABELS="$REQUIRED_LABELS" \
-        bash "$REPO_DIR/check_allure_labels.sh" 2>&1 || true)"
+        bash "$REPO_DIR/check_allure_labels.sh" 2>&1; echo "exit: $?")"
     echo "$python_out" | sed "s|$results|<results>|"
 
     if [ "$python_out" != "$bash_out" ]; then
-        echo "FAIL: the two scripts printed different reports"
+        echo "FAIL: the two scripts printed different reports or exit codes"
         diff <(echo "$python_out") <(echo "$bash_out") || true
         return 1
     fi

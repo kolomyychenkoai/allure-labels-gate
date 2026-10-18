@@ -43,6 +43,10 @@ class LabelsContractTest {
     void allureInMethodNameOnly() {
     }
 
+    @Test
+    void allureInMethodName() {
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"a", "b"})
     @Feature("Tariffs")

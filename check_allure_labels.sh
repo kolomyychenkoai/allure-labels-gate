@@ -4,8 +4,6 @@
 # A label counts only if its value is not empty. Tests whose name contains
 # "allure" (in any case) are not checked.
 #
-# Settings: edit the values below or set environment variables with the same names.
-#
 # Exit codes:
 #   0  every checked test has all required labels
 #   1  some tests are missing required labels (they are listed)
@@ -15,12 +13,17 @@
 
 set -euo pipefail
 
-# Allure results directory of the project, e.g. target/allure-results. Required.
+# Settings. An environment variable with the same name, if not empty, wins over
+# the value written here. To fix a value in the script, change the text after ":-".
+
+# Allure results directory of the project, for example "target/allure-results".
+# Required: every project writes its results to its own place.
 ALLURE_RESULTS_DIR="${ALLURE_RESULTS_DIR:-}"
 
-# Comma-separated names of the labels every test must have.
+# Comma-separated label names every test must have. Names are case-sensitive.
 REQUIRED_LABELS="${REQUIRED_LABELS:-epic,feature,owner}"
 
+# Tests whose name contains this text, in any case, are not checked.
 EXCLUDE_IF_NAME_CONTAINS="allure"
 
 HINT="Check ALLURE_RESULTS_DIR and that the tests ran before this step."
@@ -35,19 +38,23 @@ def blank: text | gsub("[ \t\r\n]"; "") == "";
 JQ_READ_RESULT="$JQ_HELPERS"'
 if type != "object" then error("not a test result") else . end
 | [ .labels | if type == "array" then .[] else empty end
-    | objects | select(.value | blank | not) | .name ] as $present
+    | objects | select((.name | type == "string") and (.value | blank | not)) | .name ]
+  as $present
 | { test: [ (.fullName | text), (.name | text) ],
     missing: ($required - $present) }
 '
 
-# A retried test writes one file per attempt with the same name and fullName;
-# invocations of a parameterized test share fullName but differ in name.
+# One test is a (fullName, name) pair: invocations of a parameterized test share
+# fullName but differ in name. A retried test writes a file per attempt, and a
+# label counts if any attempt has it: a failed attempt may stop before the code
+# that adds the label.
 JQ_SUMMARIZE='
 group_by(.test)
 | map({ fullName: .[0].test[0],
         name: .[0].test[1],
-        missing: ([ .[].missing[] ] as $missing
-                  | $required | map(select(. as $name | any($missing[]; . == $name)))) })
+        missing: (map(.missing) as $attempts
+                  | $required | map(select(. as $label_name
+                                             | all($attempts[]; any(.[]; . == $label_name))))) })
 | map(.excluded = (.name | ascii_downcase | contains($exclude)))
 | { found: length,
     excluded: map(select(.excluded)) | length,
@@ -66,20 +73,24 @@ fail() {
 }
 
 # An unexpected failure must not look like exit code 1, "tests are missing labels".
-trap 'fail "unexpected error at line $LINENO of $0."' ERR
+trap 'fail "unexpected error at line $LINENO of $0. This is a bug in the script; report it with this output."' ERR
 
 list_result_files() {
-    find "$ALLURE_RESULTS_DIR" -maxdepth 1 -type f -name '*-result.json' -print0
+    local dir="$ALLURE_RESULTS_DIR"
+    case "$dir" in
+        -*) dir="./$dir" ;;  # otherwise find takes the path for an option
+    esac
+    find -L "$dir" -maxdepth 1 -type f -name '*-result.json' -print0
 }
 
 fail_on_first_unreadable_file() {
     local file
     while IFS= read -r -d '' file; do
-        if ! jq -e 'type == "object"' "$file" >/dev/null 2>&1; then
-            fail "$(basename "$file") in $ALLURE_RESULTS_DIR cannot be read as an Allure test result (expected a JSON object)."
+        if ! jq -s -e 'length == 1 and (.[0] | type == "object")' "$file" >/dev/null 2>&1; then
+            fail "$(basename "$file") in $ALLURE_RESULTS_DIR cannot be read as an Allure test result (expected one JSON object). The file may be cut short if the test run was killed: clean the directory and run the tests again."
         fi
     done < <(list_result_files | LC_ALL=C sort -z)
-    fail "could not read the test results in $ALLURE_RESULTS_DIR."
+    fail "could not read the test results in $ALLURE_RESULTS_DIR. Run check_allure_labels.py to see which file fails."
 }
 
 command -v jq >/dev/null 2>&1 \
@@ -94,16 +105,27 @@ fi
 if [ -z "$ALLURE_RESULTS_DIR" ]; then
     fail "ALLURE_RESULTS_DIR is not set. Set it to the Allure results directory of this project, for example ALLURE_RESULTS_DIR=target/allure-results."
 fi
-if [ ! -d "$ALLURE_RESULTS_DIR" ]; then
+if [ ! -e "$ALLURE_RESULTS_DIR" ]; then
     fail "Allure results directory does not exist: $ALLURE_RESULTS_DIR. $HINT"
 fi
-if [ -z "$(list_result_files | head -c 1)" ]; then
+if [ ! -d "$ALLURE_RESULTS_DIR" ]; then
+    fail "ALLURE_RESULTS_DIR is not a directory: $ALLURE_RESULTS_DIR. $HINT"
+fi
+
+file_count=$(list_result_files | tr -cd '\0' | wc -c)
+if [ "$file_count" -eq 0 ]; then
     fail "no test results (*-result.json) in $ALLURE_RESULTS_DIR. $HINT"
 fi
 
 records="$(list_result_files \
     | xargs -0 jq -c --argjson required "$required" "$JQ_READ_RESULT" 2>/dev/null)" \
     || fail_on_first_unreadable_file
+
+# jq reads an empty file or two objects in one file without an error.
+record_count=$(printf '%s' "$records" | awk 'END { print NR }')
+if [ "$record_count" -ne "$file_count" ]; then
+    fail_on_first_unreadable_file
+fi
 
 summary="$(jq -s -c --argjson required "$required" --arg exclude "$EXCLUDE_IF_NAME_CONTAINS" \
     "$JQ_SUMMARIZE" <<<"$records")"

@@ -1,0 +1,59 @@
+{
+  "uuid": "60c19ca0-20b9-44c4-a46c-f44851922e83",
+  "historyId": "659002905826a91556e55d439c579cf8",
+  "testCaseId": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:flaky()]",
+  "testCaseName": "flaky()",
+  "fullName": "com.example.billing.LabelsContractTest.everyAttemptLacksFeature",
+  "labels": [
+    {
+      "name": "junit.platform.uniqueid",
+      "value": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:flaky()]"
+    },
+    {
+      "name": "epic",
+      "value": "Billing"
+    },
+    {
+      "name": "host",
+      "value": "ci-agent"
+    },
+    {
+      "name": "thread",
+      "value": "68425@ci-agent.main(3)"
+    },
+    {
+      "name": "framework",
+      "value": "junit-platform"
+    },
+    {
+      "name": "language",
+      "value": "java"
+    },
+    {
+      "name": "package",
+      "value": "com.example.billing.LabelsContractTest"
+    },
+    {
+      "name": "testClass",
+      "value": "com.example.billing.LabelsContractTest"
+    },
+    {
+      "name": "testMethod",
+      "value": "flaky"
+    },
+    {
+      "name": "suite",
+      "value": "com.example.billing.LabelsContractTest"
+    }
+  ],
+  "links": [],
+  "name": "everyAttemptLacksFeature",
+  "status": "passed",
+  "stage": "finished",
+  "description": "",
+  "steps": [],
+  "attachments": [],
+  "parameters": [],
+  "start": 1792316735344,
+  "stop": 1792316735344
+}

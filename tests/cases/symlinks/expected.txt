@@ -1,0 +1,12 @@
+Allure results: linked-results
+Required labels: epic, feature, owner
+Tests found: 1, not checked because the name contains "allure": 0
+
+Tests missing required labels:
+
+  com.example.billing.LabelsContractTest.noOwner
+    name:    noOwner()
+    missing: owner
+
+FAILED: 1 of 1 checked tests are missing required labels.
+exit: 1
