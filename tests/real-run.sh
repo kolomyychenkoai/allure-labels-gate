@@ -48,14 +48,17 @@ run_js_example() {
     check_results "$WORK/js/allure-results"
 }
 
-# Tests without a required label as "fullName | name", found by a plain jq query.
+# Tests without a required label as "fullName | name", found by a plain jq query:
+# attempts of one test are grouped, tests where every attempt was skipped are left out.
 expected_failing() {
-    jq -r --arg required "$REQUIRED_LABELS" '
+    jq -r -s --arg required "$REQUIRED_LABELS" '
         ($required | split(",")) as $names
-        | select((.name // "" | ascii_downcase | contains("allure")) | not)
-        | select([ .labels[]? | select((.value // "" | gsub("[ \t\r\n]"; "")) != "") | .name ] as $present
+        | group_by([.fullName, .name])[]
+        | select(any(.[]; .status != "skipped"))
+        | select((.[0].name // "" | ascii_downcase | contains("allure")) | not)
+        | select([ .[].labels[]? | select((.value // "" | gsub("[ \t\r\n]"; "")) != "") | .name ] as $present
                  | any($names[]; . as $n | $present | index($n) | not))
-        | "\(.fullName) | \(.name)"' "$1"/*-result.json | sort -u
+        | "\(.[0].fullName) | \(.[0].name)"' "$1"/*-result.json | sort -u
 }
 
 # Tests the script listed, as "fullName | name".

@@ -1,8 +1,8 @@
 # allure-labels-gate
 
 Шаг CI, который роняет сборку, если в результатах Allure есть автотест без обязательных
-лейблов. Тесты, в имени которых есть `allure` (в любом регистре, в том числе внутри слова),
-не проверяются.
+лейблов. Не проверяются тесты, в имени которых есть `allure` (в любом регистре, в том числе
+внутри слова), и выключенные тесты (`@Disabled`, `it.skip`).
 
 Скрипт один, в двух вариантах с одинаковым поведением — берите тот, что удобнее на вашем агенте:
 
@@ -19,7 +19,7 @@
 | переменная | что задать | по умолчанию |
 |---|---|---|
 | `ALLURE_RESULTS_DIR` | папка результатов Allure этого проекта | не задана — **обязательно** |
-| `REQUIRED_LABELS` | имена лейблов через запятую, регистр важен (`Epic` ≠ `epic`) | `epic,feature,owner` |
+| `REQUIRED_LABELS` | имена лейблов через запятую, регистр важен (`Epic` ≠ `epic`) | `testStage,System,layer` |
 
 Путь у каждого проекта свой, поэтому умолчания нет. Где искать папку:
 
@@ -61,12 +61,13 @@ ALLURE_RESULTS_DIR=target/allure-results bash check_allure_labels.sh
 
 ## Что печатает
 
-Отчёт идёт в stdout, сообщения `ERROR:` — в stderr. Настоящий вывод, середина сокращена:
+Отчёт идёт в stdout, сообщения `ERROR:` — в stderr. Настоящий вывод тестового проекта
+(лейблы там другие и заданы через `REQUIRED_LABELS`), середина сокращена:
 
 ```
 Allure results: target/allure-results
 Required labels: epic, feature, owner
-Tests found: 10, not checked because the name contains "allure": 2
+Tests found: 10, not checked: 2 with "allure" in the name, 1 skipped
 
 Tests missing required labels:
 
@@ -74,13 +75,13 @@ Tests missing required labels:
     name:    display name without the word
     missing: feature, owner
 
-  com.example.billing.LabelsContractTest.disabled
-    name:    disabled()
-    missing: feature, owner
+  com.example.billing.LabelsContractTest.emptyFeature
+    name:    emptyFeature()
+    missing: feature
 
   …
 
-FAILED: 7 of 8 checked tests are missing required labels.
+FAILED: 6 of 7 checked tests are missing required labels.
 ```
 
 Первая строка теста — полное имя (класс и метод, в JS — файл, `describe` и имя теста), по нему тест
@@ -96,8 +97,9 @@ FAILED: 7 of 8 checked tests are missing required labels.
   засчитан, если он есть хотя бы в одной попытке: упавшая попытка могла не дойти до
   строки, где лейбл ставится. Вызовы параметризованного теста — разные тесты.
 - Символические ссылки на папку и на файлы результатов читаются как обычные.
-- Пропущенные тесты (`@Disabled`, `it.skip`) тоже проверяются. В JS лейблы ставятся
-  внутри тела теста, поэтому у пропущенного JS-теста их нет.
+- Выключенные тесты (статус `skipped`: `@Disabled`, `it.skip`) не проверяются: в JS лейблы
+  ставятся внутри тела теста, а у выключенного теста тело не выполняется. Если у перезапуска
+  хоть одна попытка выполнялась, тест проверяется.
 - Слово `allure` ищется в имени теста из отчёта. В JUnit 5 это `@DisplayName`, если он
   задан, иначе имя метода. Имя класса и пакета не учитывается.
 

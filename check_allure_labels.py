@@ -2,7 +2,7 @@
 """Fail the CI build if a test in the Allure results has no required labels.
 
 A label counts only if its value is not empty. Tests whose name contains
-"allure" (in any case) are not checked.
+"allure" (in any case) and skipped tests (@Disabled, it.skip) are not checked.
 
 Exit codes:
   0  every checked test has all required labels
@@ -26,7 +26,7 @@ import sys
 ALLURE_RESULTS_DIR = os.environ.get("ALLURE_RESULTS_DIR") or ""
 
 # Comma-separated label names every test must have. Names are case-sensitive.
-REQUIRED_LABELS = os.environ.get("REQUIRED_LABELS") or "epic,feature,owner"
+REQUIRED_LABELS = os.environ.get("REQUIRED_LABELS") or "testStage,System,layer"
 
 # Not read from the environment; edit here if needed.
 # Tests whose name contains this text, in any case, are not checked.
@@ -48,7 +48,7 @@ def parse_required_labels(setting):
     names = [name for name in names if name]
     if not names:
         fail("REQUIRED_LABELS has no label names. Set comma-separated names, "
-             "for example REQUIRED_LABELS=epic,feature,owner.")
+             "for example REQUIRED_LABELS=testStage,System,layer.")
     return names
 
 
@@ -110,8 +110,10 @@ def main():
     # One test is a (fullName, name) pair: invocations of a parameterized test share
     # fullName but differ in name. A retried test writes a file per attempt, and a
     # label counts if any attempt has it: a failed attempt may stop before the code
-    # that adds the label.
+    # that adds the label. A test is skipped only if every attempt was skipped:
+    # a skipped JS test never runs the code that adds labels.
     missing_by_test = {}
+    ran = set()
     for file_name in files:
         result = read_result(ALLURE_RESULTS_DIR, file_name)
         test = (text_field(result, "fullName"), text_field(result, "name"))
@@ -121,18 +123,20 @@ def main():
             missing_by_test[test] &= missing
         else:
             missing_by_test[test] = missing
+        if result.get("status") != "skipped":
+            ran.add(test)
 
-    excluded = {(full_name, name) for full_name, name in missing_by_test
-                if EXCLUDE_IF_NAME_CONTAINS in name.lower()}
-    checked = len(missing_by_test) - len(excluded)
-    failing = sorted(test for test, missing in missing_by_test.items()
-                     if missing and test not in excluded)
+    with_allure = {(full_name, name) for full_name, name in missing_by_test
+                   if EXCLUDE_IF_NAME_CONTAINS in name.lower()}
+    skipped = missing_by_test.keys() - ran - with_allure
+    checked = missing_by_test.keys() - with_allure - skipped
+    failing = sorted(test for test in checked if missing_by_test[test])
 
     report = [
         "Allure results: " + ALLURE_RESULTS_DIR,
         "Required labels: " + ", ".join(required),
-        f'Tests found: {len(missing_by_test)}, '
-        f'not checked because the name contains "{EXCLUDE_IF_NAME_CONTAINS}": {len(excluded)}',
+        f'Tests found: {len(missing_by_test)}, not checked: {len(with_allure)} '
+        f'with "{EXCLUDE_IF_NAME_CONTAINS}" in the name, {len(skipped)} skipped',
         "",
     ]
     if failing:
@@ -145,10 +149,10 @@ def main():
                 "    missing: " + ", ".join(label for label in required if label in missing),
                 "",
             ]
-        report.append(f"FAILED: {len(failing)} of {checked} checked tests "
+        report.append(f"FAILED: {len(failing)} of {len(checked)} checked tests "
                       "are missing required labels.")
     else:
-        report.append(f"OK: all {checked} checked tests have the required labels.")
+        report.append(f"OK: all {len(checked)} checked tests have the required labels.")
 
     print("\n".join(report))
     return 1 if failing else 0

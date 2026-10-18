@@ -1,15 +1,11 @@
 Allure results: ../../real/java-junit5
 Required labels: epic, feature, owner
-Tests found: 10, not checked because the name contains "allure": 2
+Tests found: 10, not checked: 2 with "allure" in the name, 1 skipped
 
 Tests missing required labels:
 
   com.example.billing.LabelsContractTest.allureInMethodNameOnly
     name:    display name without the word
-    missing: feature, owner
-
-  com.example.billing.LabelsContractTest.disabled
-    name:    disabled()
     missing: feature, owner
 
   com.example.billing.LabelsContractTest.emptyFeature
@@ -32,5 +28,5 @@ Tests missing required labels:
     name:    parameterized(String) [2] value=b
     missing: owner
 
-FAILED: 7 of 8 checked tests are missing required labels.
+FAILED: 6 of 7 checked tests are missing required labels.
 exit: 1

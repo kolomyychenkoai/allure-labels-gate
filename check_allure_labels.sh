@@ -2,7 +2,7 @@
 # Fail the CI build if a test in the Allure results has no required labels.
 #
 # A label counts only if its value is not empty. Tests whose name contains
-# "allure" (in any case) are not checked.
+# "allure" (in any case) and skipped tests (@Disabled, it.skip) are not checked.
 #
 # Exit codes:
 #   0  every checked test has all required labels
@@ -23,7 +23,7 @@ set -euo pipefail
 ALLURE_RESULTS_DIR="${ALLURE_RESULTS_DIR:-}"
 
 # Comma-separated label names every test must have. Names are case-sensitive.
-REQUIRED_LABELS="${REQUIRED_LABELS:-epic,feature,owner}"
+REQUIRED_LABELS="${REQUIRED_LABELS:-testStage,System,layer}"
 
 # Not read from the environment; edit here if needed.
 # Tests whose name contains this text, in any case, are not checked.
@@ -38,7 +38,8 @@ def blank: text | gsub("[ \t\r\n]"; "") == "";
 def trim: gsub("^[ \t\r\n]+|[ \t\r\n]+$"; "");
 '
 
-# One line per result file: the file, the test (fullName, name) and the required labels it lacks.
+# One line per result file: the file, the test (fullName, name), whether it was
+# skipped, and the required labels it lacks.
 JQ_READ_RESULT="$JQ_HELPERS"'
 if type != "object" then error("not a test result") else . end
 | [ .labels | if type == "array" then .[] else empty end
@@ -46,22 +47,29 @@ if type != "object" then error("not a test result") else . end
   as $present
 | { file: input_filename,
     test: [ (.fullName | text), (.name | text) ],
+    skipped: (.status == "skipped"),
     missing: ($required - $present) }
 '
 
 # One test is a (fullName, name) pair: invocations of a parameterized test share
 # fullName but differ in name. A retried test writes a file per attempt, and a
 # label counts if any attempt has it: a failed attempt may stop before the code
-# that adds the label.
+# that adds the label. A test is skipped only if every attempt was skipped:
+# a skipped JS test never runs the code that adds labels.
 JQ_SUMMARIZE='
 def missing_in_every_attempt: $required - (map($required - .missing) | add);
 
 group_by(.test)
-| map({ fullName: .[0].test[0], name: .[0].test[1], missing: missing_in_every_attempt })
-| map(.excluded = (.name | ascii_downcase | contains($exclude)))
+| map({ fullName: .[0].test[0],
+        name: .[0].test[1],
+        missing: missing_in_every_attempt,
+        skipped: all(.[]; .skipped) })
+| map(.with_allure = (.name | ascii_downcase | contains($exclude)))
+| map(.skipped = (.skipped and (.with_allure | not)))
 | { found: length,
-    excluded: map(select(.excluded)) | length,
-    failing: map(select((.excluded | not) and (.missing | length > 0))) }
+    with_allure: map(select(.with_allure)) | length,
+    skipped: map(select(.skipped)) | length,
+    failing: map(select(((.with_allure or .skipped) | not) and (.missing | length > 0))) }
 '
 
 JQ_PRINT_FAILING='
@@ -102,7 +110,7 @@ command -v jq >/dev/null 2>&1 \
 required="$(jq -n -c --arg setting "$REQUIRED_LABELS" \
     "$JQ_HELPERS"'$setting | split(",") | map(trim) | map(select(length > 0))')"
 if [ "$required" = "[]" ]; then
-    fail "REQUIRED_LABELS has no label names. Set comma-separated names, for example REQUIRED_LABELS=epic,feature,owner."
+    fail "REQUIRED_LABELS has no label names. Set comma-separated names, for example REQUIRED_LABELS=testStage,System,layer."
 fi
 
 if [ -z "$ALLURE_RESULTS_DIR" ]; then
@@ -134,12 +142,13 @@ fi
 
 summary="$(jq -s -c --argjson required "$required" --arg exclude "$EXCLUDE_IF_NAME_CONTAINS" \
     "$JQ_SUMMARIZE" <<<"$records")"
-read -r found excluded failing <<<"$(jq -r '"\(.found) \(.excluded) \(.failing | length)"' <<<"$summary")"
-checked=$((found - excluded))
+read -r found with_allure skipped failing <<<"$(jq -r \
+    '"\(.found) \(.with_allure) \(.skipped) \(.failing | length)"' <<<"$summary")"
+checked=$((found - with_allure - skipped))
 
 echo "Allure results: $ALLURE_RESULTS_DIR"
 echo "Required labels: $(jq -r 'join(", ")' <<<"$required")"
-echo "Tests found: $found, not checked because the name contains \"$EXCLUDE_IF_NAME_CONTAINS\": $excluded"
+echo "Tests found: $found, not checked: $with_allure with \"$EXCLUDE_IF_NAME_CONTAINS\" in the name, $skipped skipped"
 echo
 
 if [ "$failing" -eq 0 ]; then

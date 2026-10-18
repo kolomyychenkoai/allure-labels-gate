@@ -1,6 +1,6 @@
 Allure results: results
 Required labels: epic, feature, owner
-Tests found: 5, not checked because the name contains "allure": 3
+Tests found: 5, not checked: 3 with "allure" in the name, 0 skipped
 
 Tests missing required labels:
 
