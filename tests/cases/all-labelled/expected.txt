@@ -1,0 +1,6 @@
+Allure results: results
+Required labels: epic, feature, owner
+Tests found: 1, not checked: 0 with "allure" in the name, 0 skipped
+
+OK: all 1 checked tests have the required labels.
+exit: 0

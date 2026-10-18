@@ -1,0 +1,2 @@
+ERROR: REQUIRED_LABELS has no label names. Set comma-separated names, for example REQUIRED_LABELS=testStage,System,layer.
+exit: 2

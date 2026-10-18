@@ -1,0 +1,65 @@
+{
+  "uuid": "20bc9409-6996-46f7-b131-1d9275ecd6b8",
+  "historyId": "81395fab54901424d7b92a7bfd9c506c",
+  "testCaseId": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:disabled()]",
+  "testCaseName": "disabled()",
+  "fullName": "com.example.billing.LabelsContractTest.skippedAllureCheck",
+  "labels": [
+    {
+      "name": "junit.platform.uniqueid",
+      "value": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:disabled()]"
+    },
+    {
+      "name": "epic",
+      "value": "Billing"
+    },
+    {
+      "name": "host",
+      "value": "ci-agent"
+    },
+    {
+      "name": "thread",
+      "value": "68425@ci-agent.main(3)"
+    },
+    {
+      "name": "framework",
+      "value": "junit-platform"
+    },
+    {
+      "name": "language",
+      "value": "java"
+    },
+    {
+      "name": "package",
+      "value": "com.example.billing.LabelsContractTest"
+    },
+    {
+      "name": "testClass",
+      "value": "com.example.billing.LabelsContractTest"
+    },
+    {
+      "name": "testMethod",
+      "value": "disabled"
+    },
+    {
+      "name": "suite",
+      "value": "com.example.billing.LabelsContractTest"
+    }
+  ],
+  "links": [],
+  "name": "skippedAllureCheck()",
+  "status": "skipped",
+  "statusDetails": {
+    "known": false,
+    "muted": false,
+    "flaky": false,
+    "message": "contract check"
+  },
+  "stage": "finished",
+  "description": "",
+  "steps": [],
+  "attachments": [],
+  "parameters": [],
+  "start": 1792316735335,
+  "stop": 1792316735335
+}

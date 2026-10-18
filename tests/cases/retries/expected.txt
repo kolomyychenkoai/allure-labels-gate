@@ -1,0 +1,12 @@
+Allure results: results
+Required labels: epic, feature
+Tests found: 4, not checked: 0 with "allure" in the name, 0 skipped
+
+Tests missing required labels:
+
+  com.example.billing.LabelsContractTest.everyAttemptLacksFeature
+    name:    everyAttemptLacksFeature
+    missing: feature
+
+FAILED: 1 of 4 checked tests are missing required labels.
+exit: 1

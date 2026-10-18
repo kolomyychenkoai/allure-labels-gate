@@ -1,0 +1,67 @@
+{
+  "uuid": "allLabels",
+  "historyId": "5583375fae933e1af0ef62307cbb26b3",
+  "testCaseId": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:allLabels()]",
+  "testCaseName": "allLabels()",
+  "fullName": "com.example.billing.LabelsContractTest.allLabels",
+  "labels": [
+    {
+      "name": "junit.platform.uniqueid",
+      "value": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:allLabels()]"
+    },
+    {
+      "name": "epic",
+      "value": "Billing"
+    },
+    {
+      "name": "feature",
+      "value": "Tariffs"
+    },
+    {
+      "name": "owner",
+      "value": "ivanov"
+    },
+    {
+      "name": "host",
+      "value": "ci-agent"
+    },
+    {
+      "name": "thread",
+      "value": "16135@ci-agent.main(3)"
+    },
+    {
+      "name": "framework",
+      "value": "junit-platform"
+    },
+    {
+      "name": "language",
+      "value": "java"
+    },
+    {
+      "name": "package",
+      "value": "com.example.billing.LabelsContractTest"
+    },
+    {
+      "name": "testClass",
+      "value": "com.example.billing.LabelsContractTest"
+    },
+    {
+      "name": "testMethod",
+      "value": "allLabels"
+    },
+    {
+      "name": "suite",
+      "value": "com.example.billing.LabelsContractTest"
+    }
+  ],
+  "links": [],
+  "name": "allLabels",
+  "status": "passed",
+  "stage": "finished",
+  "description": "",
+  "steps": [],
+  "attachments": [],
+  "parameters": [],
+  "start": 1792315678880,
+  "stop": 1792315678881
+}

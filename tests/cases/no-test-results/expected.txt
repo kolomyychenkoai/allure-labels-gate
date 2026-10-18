@@ -1,0 +1,2 @@
+ERROR: no test results (*-result.json) in results. Check ALLURE_RESULTS_DIR and that the tests ran before this step.
+exit: 2

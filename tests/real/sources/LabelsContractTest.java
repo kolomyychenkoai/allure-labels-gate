@@ -39,7 +39,12 @@ class LabelsContractTest {
     }
 
     @Test
+    @DisplayName("display name without the word")
     void allureInMethodNameOnly() {
+    }
+
+    @Test
+    void allureInMethodName() {
     }
 
     @ParameterizedTest

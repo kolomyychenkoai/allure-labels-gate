@@ -1,0 +1,2 @@
+ERROR: ALLURE_RESULTS_DIR is not a directory: env. Set it to the Allure results directory, not a file.
+exit: 2

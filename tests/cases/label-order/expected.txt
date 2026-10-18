@@ -1,0 +1,12 @@
+Allure results: results
+Required labels: owner, epic
+Tests found: 1, not checked: 0 with "allure" in the name, 0 skipped
+
+Tests missing required labels:
+
+  com.example.billing.LabelsContractTest.allLabels
+    name:    allLabels
+    missing: owner, epic
+
+FAILED: 1 of 1 checked tests are missing required labels.
+exit: 1

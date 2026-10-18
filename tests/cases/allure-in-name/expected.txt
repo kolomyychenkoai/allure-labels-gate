@@ -1,0 +1,16 @@
+Allure results: results
+Required labels: epic, feature, owner
+Tests found: 5, not checked: 3 with "allure" in the name, 0 skipped
+
+Tests missing required labels:
+
+  com.example.billing.LabelsContractTest.allurReport
+    name:    allurReport
+    missing: epic, feature, owner
+
+  io.qameta.allure.SomeTest.plainName
+    name:    plainName()
+    missing: epic, feature, owner
+
+FAILED: 2 of 2 checked tests are missing required labels.
+exit: 1
