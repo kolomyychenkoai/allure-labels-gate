@@ -2,7 +2,8 @@
 # Fail the CI build if a test in the Allure results has no required labels.
 #
 # A label counts only if its value is not empty. Tests whose name contains
-# "allure" (in any case) and skipped tests (@Disabled, it.skip) are not checked.
+# "allure" (in any case) and tests with status "skipped" (@Disabled, it.skip,
+# a failed assumption) are not checked.
 #
 # Exit codes:
 #   0  every checked test has all required labels
@@ -54,8 +55,9 @@ if type != "object" then error("not a test result") else . end
 # One test is a (fullName, name) pair: invocations of a parameterized test share
 # fullName but differ in name. A retried test writes a file per attempt, and a
 # label counts if any attempt has it: a failed attempt may stop before the code
-# that adds the label. A test is skipped only if every attempt was skipped:
-# a skipped JS test never runs the code that adds labels.
+# that adds the label. Skipped tests are not checked: a skipped JS test never
+# runs the code that adds labels. A retried test counts as skipped only if every
+# attempt was skipped.
 JQ_SUMMARIZE='
 def missing_in_every_attempt: $required - (map($required - .missing) | add);
 
@@ -63,13 +65,13 @@ group_by(.test)
 | map({ fullName: .[0].test[0],
         name: .[0].test[1],
         missing: missing_in_every_attempt,
-        skipped: all(.[]; .skipped) })
-| map(.with_allure = (.name | ascii_downcase | contains($exclude)))
-| map(.skipped = (.skipped and (.with_allure | not)))
+        all_attempts_skipped: all(.[]; .skipped) })
+| map(.excluded_by_name = (.name | ascii_downcase | contains($exclude)))
+| map(.skipped = (.all_attempts_skipped and (.excluded_by_name | not)))
 | { found: length,
-    with_allure: map(select(.with_allure)) | length,
+    excluded_by_name: map(select(.excluded_by_name)) | length,
     skipped: map(select(.skipped)) | length,
-    failing: map(select(((.with_allure or .skipped) | not) and (.missing | length > 0))) }
+    failing: map(select(((.excluded_by_name or .skipped) | not) and (.missing | length > 0))) }
 '
 
 JQ_PRINT_FAILING='
@@ -142,13 +144,13 @@ fi
 
 summary="$(jq -s -c --argjson required "$required" --arg exclude "$EXCLUDE_IF_NAME_CONTAINS" \
     "$JQ_SUMMARIZE" <<<"$records")"
-read -r found with_allure skipped failing <<<"$(jq -r \
-    '"\(.found) \(.with_allure) \(.skipped) \(.failing | length)"' <<<"$summary")"
-checked=$((found - with_allure - skipped))
+read -r found excluded_by_name skipped failing <<<"$(jq -r \
+    '"\(.found) \(.excluded_by_name) \(.skipped) \(.failing | length)"' <<<"$summary")"
+checked=$((found - excluded_by_name - skipped))
 
 echo "Allure results: $ALLURE_RESULTS_DIR"
 echo "Required labels: $(jq -r 'join(", ")' <<<"$required")"
-echo "Tests found: $found, not checked: $with_allure with \"$EXCLUDE_IF_NAME_CONTAINS\" in the name, $skipped skipped"
+echo "Tests found: $found, not checked: $excluded_by_name with \"$EXCLUDE_IF_NAME_CONTAINS\" in the name, $skipped skipped"
 echo
 
 if [ "$failing" -eq 0 ]; then

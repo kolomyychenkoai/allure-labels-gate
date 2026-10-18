@@ -2,7 +2,8 @@
 """Fail the CI build if a test in the Allure results has no required labels.
 
 A label counts only if its value is not empty. Tests whose name contains
-"allure" (in any case) and skipped tests (@Disabled, it.skip) are not checked.
+"allure" (in any case) and tests with status "skipped" (@Disabled, it.skip,
+a failed assumption) are not checked.
 
 Exit codes:
   0  every checked test has all required labels
@@ -110,10 +111,11 @@ def main():
     # One test is a (fullName, name) pair: invocations of a parameterized test share
     # fullName but differ in name. A retried test writes a file per attempt, and a
     # label counts if any attempt has it: a failed attempt may stop before the code
-    # that adds the label. A test is skipped only if every attempt was skipped:
-    # a skipped JS test never runs the code that adds labels.
+    # that adds the label. Skipped tests are not checked: a skipped JS test never
+    # runs the code that adds labels. A retried test counts as skipped only if every
+    # attempt was skipped.
     missing_by_test = {}
-    ran = set()
+    tests_that_ran = set()
     for file_name in files:
         result = read_result(ALLURE_RESULTS_DIR, file_name)
         test = (text_field(result, "fullName"), text_field(result, "name"))
@@ -124,18 +126,18 @@ def main():
         else:
             missing_by_test[test] = missing
         if result.get("status") != "skipped":
-            ran.add(test)
+            tests_that_ran.add(test)
 
-    with_allure = {(full_name, name) for full_name, name in missing_by_test
-                   if EXCLUDE_IF_NAME_CONTAINS in name.lower()}
-    skipped = missing_by_test.keys() - ran - with_allure
-    checked = missing_by_test.keys() - with_allure - skipped
+    excluded_by_name = {(full_name, name) for full_name, name in missing_by_test
+                        if EXCLUDE_IF_NAME_CONTAINS in name.lower()}
+    skipped = missing_by_test.keys() - tests_that_ran - excluded_by_name
+    checked = tests_that_ran - excluded_by_name
     failing = sorted(test for test in checked if missing_by_test[test])
 
     report = [
         "Allure results: " + ALLURE_RESULTS_DIR,
         "Required labels: " + ", ".join(required),
-        f'Tests found: {len(missing_by_test)}, not checked: {len(with_allure)} '
+        f'Tests found: {len(missing_by_test)}, not checked: {len(excluded_by_name)} '
         f'with "{EXCLUDE_IF_NAME_CONTAINS}" in the name, {len(skipped)} skipped',
         "",
     ]
