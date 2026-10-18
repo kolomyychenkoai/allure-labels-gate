@@ -1,6 +1,6 @@
 Allure results: results
 Required labels: epic, feature
-Tests found: 3, not checked because the name contains "allure": 0
+Tests found: 4, not checked because the name contains "allure": 0
 
 Tests missing required labels:
 
@@ -8,5 +8,5 @@ Tests missing required labels:
     name:    everyAttemptLacksFeature
     missing: feature
 
-FAILED: 1 of 3 checked tests are missing required labels.
+FAILED: 1 of 4 checked tests are missing required labels.
 exit: 1
