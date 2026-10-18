@@ -17,7 +17,7 @@ import os
 import sys
 
 # Settings. An environment variable with the same name, if not empty, wins over
-# the value written here. To fix a value in the script, change the text after "or".
+# the value written here. To set the value in the script itself, edit the text after "or".
 
 # Allure results directory of the project, for example "target/allure-results".
 # Required: every project writes its results to its own place.
@@ -54,14 +54,14 @@ def find_result_files(results_dir):
         fail("ALLURE_RESULTS_DIR is not set. Set it to the Allure results directory "
              "of this project, for example ALLURE_RESULTS_DIR=target/allure-results.")
     if not os.path.exists(results_dir):
-        fail("Allure results directory does not exist: {}. {}".format(results_dir, HINT))
+        fail(f"Allure results directory does not exist: {results_dir}. {HINT}")
     if not os.path.isdir(results_dir):
-        fail("ALLURE_RESULTS_DIR is not a directory: {}. {}".format(results_dir, HINT))
+        fail(f"ALLURE_RESULTS_DIR is not a directory: {results_dir}. {HINT}")
     files = sorted(name for name in os.listdir(results_dir)
                    if name.endswith("-result.json")
                    and os.path.isfile(os.path.join(results_dir, name)))
     if not files:
-        fail("no test results (*-result.json) in {}. {}".format(results_dir, HINT))
+        fail(f"no test results (*-result.json) in {results_dir}. {HINT}")
     return files
 
 
@@ -72,9 +72,9 @@ def read_result(results_dir, file_name):
     except (OSError, ValueError):
         result = None
     if not isinstance(result, dict):
-        fail("{} in {} cannot be read as an Allure test result (expected one JSON object). "
-             "The file may be cut short if the test run was killed: clean the directory "
-             "and run the tests again.".format(file_name, results_dir))
+        fail(f"{file_name} in {results_dir} cannot be read as an Allure test result "
+             "(expected one JSON object). The file may be cut short if the test run was "
+             "killed: clean the directory and run the tests again.")
     return result
 
 
@@ -95,6 +95,8 @@ def labels_with_value(result):
 
 
 def main():
+    # Test names are often not in English, and the locale on a CI agent is often not
+    # UTF-8: without this, printing such a name crashes the script.
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
@@ -116,8 +118,8 @@ def main():
         else:
             missing_by_test[test] = missing
 
-    excluded = {test for test in missing_by_test
-                if EXCLUDE_IF_NAME_CONTAINS in test[1].lower()}
+    excluded = {(full_name, name) for full_name, name in missing_by_test
+                if EXCLUDE_IF_NAME_CONTAINS in name.lower()}
     checked = len(missing_by_test) - len(excluded)
     failing = sorted(test for test, missing in missing_by_test.items()
                      if missing and test not in excluded)
@@ -125,8 +127,8 @@ def main():
     report = [
         "Allure results: " + ALLURE_RESULTS_DIR,
         "Required labels: " + ", ".join(required),
-        'Tests found: {}, not checked because the name contains "{}": {}'
-        .format(len(missing_by_test), EXCLUDE_IF_NAME_CONTAINS, len(excluded)),
+        f'Tests found: {len(missing_by_test)}, '
+        f'not checked because the name contains "{EXCLUDE_IF_NAME_CONTAINS}": {len(excluded)}',
         "",
     ]
     if failing:
@@ -139,10 +141,10 @@ def main():
                 "    missing: " + ", ".join(label for label in required if label in missing),
                 "",
             ]
-        report.append("FAILED: {} of {} checked tests are missing required labels."
-                      .format(len(failing), checked))
+        report.append(f"FAILED: {len(failing)} of {checked} checked tests "
+                      "are missing required labels.")
     else:
-        report.append("OK: all {} checked tests have the required labels.".format(checked))
+        report.append(f"OK: all {checked} checked tests have the required labels.")
 
     print("\n".join(report))
     return 1 if failing else 0
@@ -153,5 +155,5 @@ if __name__ == "__main__":
         sys.exit(main())
     except Exception as error:
         # An unexpected failure must not look like exit code 1, "tests are missing labels".
-        fail("unexpected error: {!r}. This is a bug in the script; report it with this output."
-             .format(error))
+        fail(f"unexpected error: {error!r}. "
+             "This is a bug in the script; report it with this output.")

@@ -14,7 +14,7 @@
 set -euo pipefail
 
 # Settings. An environment variable with the same name, if not empty, wins over
-# the value written here. To fix a value in the script, change the text after ":-".
+# the value written here. To set the value in the script itself, edit the text after ":-".
 
 # Allure results directory of the project, for example "target/allure-results".
 # Required: every project writes its results to its own place.
@@ -50,12 +50,12 @@ if type != "object" then error("not a test result") else . end
 # label counts if any attempt has it: a failed attempt may stop before the code
 # that adds the label.
 JQ_SUMMARIZE='
+def missing_in_every_attempt:
+  map(.missing) as $attempts
+  | $required | map(select(. as $label_name | all($attempts[]; any(.[]; . == $label_name))));
+
 group_by(.test)
-| map({ fullName: .[0].test[0],
-        name: .[0].test[1],
-        missing: (map(.missing) as $attempts
-                  | $required | map(select(. as $label_name
-                                             | all($attempts[]; any(.[]; . == $label_name))))) })
+| map({ fullName: .[0].test[0], name: .[0].test[1], missing: missing_in_every_attempt })
 | map(.excluded = (.name | ascii_downcase | contains($exclude)))
 | { found: length,
     excluded: map(select(.excluded)) | length,

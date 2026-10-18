@@ -36,5 +36,5 @@
 
 - Python 3.8+ без сторонних библиотек; bash 3.2+ и jq 1.6+.
 - Быстрые проверки: `tests/run.sh`. Проверка на настоящем прогоне: `tests/real-run.sh`
-  (нужны Java 17+ с Maven и Node.js с npm).
+  (нужны Maven, Java той версии, на которой собирается сервис, и Node.js с npm).
 - CI на GitHub не настроен: у токена нет права `workflow`.
