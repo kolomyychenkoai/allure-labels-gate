@@ -8,6 +8,8 @@ Exit codes:
   0  every checked test has all required labels
   1  some tests are missing required labels (they are listed)
   2  the check could not run: wrong settings, no results, unreadable file
+Any non-zero code fails the build; 2 is kept apart from 1 so that the log
+shows a setup problem rather than missing labels.
 
 Requires Python 3.8+, no extra packages. Same behaviour as check_allure_labels.sh.
 """
@@ -26,6 +28,7 @@ ALLURE_RESULTS_DIR = os.environ.get("ALLURE_RESULTS_DIR") or ""
 # Comma-separated label names every test must have. Names are case-sensitive.
 REQUIRED_LABELS = os.environ.get("REQUIRED_LABELS") or "epic,feature,owner"
 
+# Not read from the environment; edit here if needed.
 # Tests whose name contains this text, in any case, are not checked.
 EXCLUDE_IF_NAME_CONTAINS = "allure"
 
@@ -56,7 +59,8 @@ def find_result_files(results_dir):
     if not os.path.exists(results_dir):
         fail(f"Allure results directory does not exist: {results_dir}. {HINT}")
     if not os.path.isdir(results_dir):
-        fail(f"ALLURE_RESULTS_DIR is not a directory: {results_dir}. {HINT}")
+        fail(f"ALLURE_RESULTS_DIR is not a directory: {results_dir}. "
+             "Set it to the Allure results directory, not a file.")
     files = sorted(name for name in os.listdir(results_dir)
                    if name.endswith("-result.json")
                    and os.path.isfile(os.path.join(results_dir, name)))

@@ -8,6 +8,8 @@
 #   0  every checked test has all required labels
 #   1  some tests are missing required labels (they are listed)
 #   2  the check could not run: wrong settings, no results, unreadable file, no jq
+# Any non-zero code fails the build; 2 is kept apart from 1 so that the log
+# shows a setup problem rather than missing labels.
 #
 # Requires bash 3.2+ and jq 1.6+. Same behaviour as check_allure_labels.py.
 
@@ -23,6 +25,7 @@ ALLURE_RESULTS_DIR="${ALLURE_RESULTS_DIR:-}"
 # Comma-separated label names every test must have. Names are case-sensitive.
 REQUIRED_LABELS="${REQUIRED_LABELS:-epic,feature,owner}"
 
+# Not read from the environment; edit here if needed.
 # Tests whose name contains this text, in any case, are not checked.
 EXCLUDE_IF_NAME_CONTAINS="allure"
 
@@ -32,6 +35,7 @@ HINT="Check ALLURE_RESULTS_DIR and that the tests ran before this step."
 JQ_HELPERS='
 def text: if type == "string" then . else "" end;
 def blank: text | gsub("[ \t\r\n]"; "") == "";
+def trim: gsub("^[ \t\r\n]+|[ \t\r\n]+$"; "");
 '
 
 # One line per result file: the file, the test (fullName, name) and the required labels it lacks.
@@ -50,9 +54,7 @@ if type != "object" then error("not a test result") else . end
 # label counts if any attempt has it: a failed attempt may stop before the code
 # that adds the label.
 JQ_SUMMARIZE='
-def missing_in_every_attempt:
-  map(.missing) as $attempts
-  | $required | map(select(. as $label_name | all($attempts[]; any(.[]; . == $label_name))));
+def missing_in_every_attempt: $required - (map($required - .missing) | add);
 
 group_by(.test)
 | map({ fullName: .[0].test[0], name: .[0].test[1], missing: missing_in_every_attempt })
@@ -98,7 +100,7 @@ command -v jq >/dev/null 2>&1 \
     || fail "jq is not installed. Install jq 1.6+ or use check_allure_labels.py."
 
 required="$(jq -n -c --arg setting "$REQUIRED_LABELS" \
-    '$setting | split(",") | map(gsub("^[ \t\r\n]+|[ \t\r\n]+$"; "")) | map(select(length > 0))')"
+    "$JQ_HELPERS"'$setting | split(",") | map(trim) | map(select(length > 0))')"
 if [ "$required" = "[]" ]; then
     fail "REQUIRED_LABELS has no label names. Set comma-separated names, for example REQUIRED_LABELS=epic,feature,owner."
 fi
@@ -110,7 +112,7 @@ if [ ! -e "$ALLURE_RESULTS_DIR" ]; then
     fail "Allure results directory does not exist: $ALLURE_RESULTS_DIR. $HINT"
 fi
 if [ ! -d "$ALLURE_RESULTS_DIR" ]; then
-    fail "ALLURE_RESULTS_DIR is not a directory: $ALLURE_RESULTS_DIR. $HINT"
+    fail "ALLURE_RESULTS_DIR is not a directory: $ALLURE_RESULTS_DIR. Set it to the Allure results directory, not a file."
 fi
 
 file_count=$(list_result_files | tr -cd '\0' | wc -c)
@@ -132,9 +134,7 @@ fi
 
 summary="$(jq -s -c --argjson required "$required" --arg exclude "$EXCLUDE_IF_NAME_CONTAINS" \
     "$JQ_SUMMARIZE" <<<"$records")"
-found="$(jq -r '.found' <<<"$summary")"
-excluded="$(jq -r '.excluded' <<<"$summary")"
-failing="$(jq -r '.failing | length' <<<"$summary")"
+read -r found excluded failing <<<"$(jq -r '"\(.found) \(.excluded) \(.failing | length)"' <<<"$summary")"
 checked=$((found - excluded))
 
 echo "Allure results: $ALLURE_RESULTS_DIR"
