@@ -1,0 +1,28 @@
+Allure results: results
+Required labels: epic, owner
+Tests found: 6, not checked because the name contains "allure": 0
+
+Tests missing required labels:
+
+  com.example.billing.LabelsContractTest.labelsWithNull
+    name:    labelsWithNull
+    missing: epic
+
+  com.example.billing.LabelsContractTest.noLabelsKey
+    name:    noLabelsKey
+    missing: epic, owner
+
+  com.example.billing.LabelsContractTest.ownerIsNumber
+    name:    ownerIsNumber
+    missing: owner
+
+  com.example.billing.LabelsContractTest.ownerNoValue
+    name:    ownerNoValue
+    missing: owner
+
+  com.example.billing.LabelsContractTest.ownerSpaces
+    name:    ownerSpaces
+    missing: owner
+
+FAILED: 5 of 6 checked tests are missing required labels.
+exit: 1

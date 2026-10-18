@@ -1,0 +1,2 @@
+ALLURE_RESULTS_DIR=my results
+REQUIRED_LABELS= owner , epic

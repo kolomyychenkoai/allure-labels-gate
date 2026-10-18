@@ -31,8 +31,9 @@
   `null`-поля. Для скрипта все три случая (нет лейбла, пустое значение, нет значения) — «лейбла нет».
 - `name` — имя теста, которое видно в отчёте. В JUnit 5 это `@DisplayName`, без него —
   `method()`; в Jest — строка из `it(...)`. Исключение по слову `allure` ищется здесь.
-  Имя метода в `name` не попадает, если задан `@DisplayName`:
-  `allureInMethodNameOnly()` проверяется, `@DisplayName("checkAllureReport")` — нет.
+  Если задан `@DisplayName`, имени метода в `name` нет: метод `allureInMethodNameOnly`
+  с `@DisplayName("display name without the word")` проверяется, а метод
+  `allureInDisplayName` с `@DisplayName("checkAllureReport")` — нет.
 - `fullName` — полное имя: `пакет.Класс.метод` в Java, `файл#describe имя` в Jest.
   Печатается в отчёте скрипта, чтобы тест можно было найти.
 

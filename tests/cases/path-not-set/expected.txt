@@ -1,0 +1,2 @@
+ERROR: ALLURE_RESULTS_DIR is not set. Set it to the Allure results directory of this project, for example ALLURE_RESULTS_DIR=target/allure-results.
+exit: 2

@@ -1,0 +1,2 @@
+ERROR: b-result.json in results cannot be read as an Allure test result (expected a JSON object).
+exit: 2

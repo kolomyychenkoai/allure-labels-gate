@@ -1,0 +1,17 @@
+{
+  "uuid": "allurReport",
+  "historyId": "5583375fae933e1af0ef62307cbb26b3",
+  "testCaseId": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:allLabels()]",
+  "testCaseName": "allLabels()",
+  "fullName": "com.example.billing.LabelsContractTest.allurReport",
+  "links": [],
+  "name": "allurReport",
+  "status": "passed",
+  "stage": "finished",
+  "description": "",
+  "steps": [],
+  "attachments": [],
+  "parameters": [],
+  "start": 1792315678880,
+  "stop": 1792315678881
+}

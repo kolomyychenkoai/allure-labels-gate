@@ -1,0 +1,36 @@
+Allure results: ../../real/js-jest
+Required labels: epic, feature, owner
+Tests found: 9, not checked because the name contains "allure": 1
+
+Tests missing required labels:
+
+  __tests__/labels.spec.js#billing empty feature
+    name:    empty feature
+    missing: feature
+
+  __tests__/labels.spec.js#billing flaky
+    name:    flaky
+    missing: feature, owner
+
+  __tests__/labels.spec.js#billing no owner
+    name:    no owner
+    missing: owner
+
+  __tests__/labels.spec.js#billing parameterized a
+    name:    parameterized a
+    missing: feature, owner
+
+  __tests__/labels.spec.js#billing parameterized b
+    name:    parameterized b
+    missing: feature, owner
+
+  __tests__/labels.spec.js#billing skipped
+    name:    skipped
+    missing: epic, feature, owner
+
+  __tests__/sample.spec.js#sample test
+    name:    sample test
+    missing: epic, feature, owner
+
+FAILED: 7 of 8 checked tests are missing required labels.
+exit: 1

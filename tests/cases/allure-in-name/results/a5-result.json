@@ -1,0 +1,17 @@
+{
+  "uuid": "ad483650-ebaf-443a-a3d4-5a9d13b30a90",
+  "historyId": "5583375fae933e1af0ef62307cbb26b3",
+  "testCaseId": "[engine:junit-jupiter]/[class:com.example.billing.LabelsContractTest]/[method:allLabels()]",
+  "testCaseName": "allLabels()",
+  "fullName": "io.qameta.allure.SomeTest.plainName",
+  "links": [],
+  "name": "plainName()",
+  "status": "passed",
+  "stage": "finished",
+  "description": "",
+  "steps": [],
+  "attachments": [],
+  "parameters": [],
+  "start": 1792315678880,
+  "stop": 1792315678881
+}

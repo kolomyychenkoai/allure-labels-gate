@@ -1,0 +1,12 @@
+Allure results: my results
+Required labels: owner, epic
+Tests found: 1, not checked because the name contains "allure": 0
+
+Tests missing required labels:
+
+  com.example.billing.Отчёт.noOwner
+    name:    noOwner в отчёте
+    missing: owner
+
+FAILED: 1 of 1 checked tests are missing required labels.
+exit: 1
